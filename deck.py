@@ -1,25 +1,6 @@
 from random import choice
+from cards import Card, DECK
 import re
-
-class Card:
-    _value = None
-    def __init__(self, name, band, value):
-        self.name = name
-        self.band = band
-        self.value = value
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, val):
-        if isinstance(val, int) and val < 0:
-            self._value = val
-        elif isinstance(val, tuple) and len(val) == 2:
-            self._value = val
-        else:
-            raise ValueError('Worng value')
 
 class Hand:
     _cards = []
@@ -90,7 +71,7 @@ class Player:
                 continue
 
             if amount > self.money:
-                print('Bet above your funds 1.\n')
+                print('Bet above your funds.\n')
                 continue
             
             self.money -= amount
@@ -101,30 +82,43 @@ class Dealer(Player):
     pass
 
 class Game:
-    deck = [] #just for now
+    deck = DECK * 2 # two decks of fifty - two cards
     on_bet = 0
-    player = None
-    dealer = None
+    players =[Dealer('Dealer',1000000)]
 
     def shuffle(self):
         cards = []
         for c in self.deck:
-            cards.append(self.deck.pop(choice(self.deck)))
+            card_index = self.deck.index(choice(self.deck))
+            card = self.deck.pop(card_index)
+            cards.append(card)
         self.deck = cards
     
     def bet(self):
-        self.on_bet += self.player.bet() * 2
+        for player in self.players:
+            self.on_bet += player.bet()
     
     def hit(self):
-        players = [self.dealer, self.player]
-        for player in players:
+        for player in self.players:
             if not player.hit():
                 print("%s standed." % player.name)
                 print("%s's turn has passed.\n" % player.name)
                 continue
             card = self.deck.pop()
             player.hand.add_card(card)
-            print("%s hitted and obtained %s" % (card.name))
+            print("%s hitted and obtained %s" % (player.name,card.name))
             print("%s's turn has passed.\n" % player.name)
+    
+    def start(self):
+        self.bet()
+        self.shuffle()
+        self.hit()
+
+if __name__ == "__main__":
+    game = Game()
+    game.start()
+
+
+
 
 
