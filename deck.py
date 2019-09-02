@@ -1,6 +1,7 @@
 from random import choice
 from cards import Card, DECK
 import re
+import subprocess as sp
 
 class Hand:
     _cards = []
@@ -32,7 +33,7 @@ class Hand:
                 total += c.value
                 continue
             # [1,11]
-            total = c.value[0] if total > 10 else c.value[1]
+            total += c.value[0] if total > 10 else c.value[1]
         return total 
             
     
@@ -82,10 +83,10 @@ class Dealer(Player):
     pass
 
 class Game:
-    deck = DECK * 2 # two decks of fifty - two cards
+    deck = []
     on_bet = 0
     players =[Dealer('Dealer',1000000)]
-
+        
     def shuffle(self):
         cards = []
         for c in self.deck:
@@ -98,21 +99,60 @@ class Game:
         for player in self.players:
             self.on_bet += player.bet()
     
-    def hit(self):
+    def turn(self):
+        res = {}
         for player in self.players:
-            if not player.hit():
-                print("%s standed." % player.name)
-                print("%s's turn has passed.\n" % player.name)
+            player_info = {'player':player, 'status': 'play'}
+            last_card = None
+            while True:
+                hitted = player.hit()
+                player_info.update(hitted=hitted)
+                if not hitted:
+                    player_info.update(card= last_card)
+                    break
+
+                last_card = self.deck.pop()
+                player.hand.add_card(last_card)
+                player_info.update(card= last_card)
+
+                print(player.hand.total)
+                if player.hand.total > 21:
+                    player_info.update(status='lost')
+                    break
+                elif player.hand.total == 21:
+                    player_info.update(status="won")
+                    break
+            res = player_info
+        return res
+
+    def _will_play(self):
+        while True:
+            play:str = input('Would you play? ([1]: yes [0]: no): ')
+            if not play.isdigit():
+                print("%s was not a valid asnwer, use 1 for yes or 0 for no." % play)
                 continue
-            card = self.deck.pop()
-            player.hand.add_card(card)
-            print("%s hitted and obtained %s" % (player.name,card.name))
-            print("%s's turn has passed.\n" % player.name)
-    
+            return bool(int(play))
+        
+
     def start(self):
-        self.bet()
-        self.shuffle()
-        self.hit()
+        while True:
+            if not self._will_play():
+                break
+            self.deck = DECK * 2 # two decks of fifty-two cards
+            self.bet()
+            self.shuffle()
+            while True:
+                last_player_info = self.turn()
+                
+                if last_player_info.get('status') != 'play':
+                    print('%s has %s' % (last_player_info.get('player').name,last_player_info.get('status')))
+                    break
+                
+                winner = sorted(self.players, key=lambda x: x.hand.total, reverse=True)[0]
+                if winner:
+                   print('%s has %s' % (last_player_info.get('player').name,last_player_info.get('won')))
+                   break
+                
 
 if __name__ == "__main__":
     game = Game()
