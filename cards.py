@@ -1,8 +1,8 @@
 class Card:
     _value = None
-    def __init__(self, name, band, value):
+    def __init__(self, name, suit, value):
         self.name = name
-        self.band = band
+        self.suit = suit
         self.value = value
 
     @property
@@ -18,71 +18,74 @@ class Card:
         else:
             raise ValueError('Worng value %s' % (val))
 
+    def __str__(self):
+        return "%s of %s" % (self.name,self.suit)
+
 
 CARDS_TEMPLATE = [
     {
         'name':'A',
-        'band':'',
+        'suit':'',
         'value': (1,11),
     },
     {
         'name':'Two',
-        'band':'',
+        'suit':'',
         'value': 2,
     },
     {
         'name':'Three',
-        'band':'',
+        'suit':'',
         'value': 3,
     },
     {
         'name':'Four',
-        'band':'',
+        'suit':'',
         'value': 4,
     },
     {
         'name':'Five',
-        'band':'',
+        'suit':'',
         'value': 5,
     },
     {
         'name':'Six',
-        'band':'',
+        'suit':'',
         'value': 6,
     },
     {
         'name':'Seven',
-        'band':'',
+        'suit':'',
         'value': 7,
     },
     {
         'name':'Eight',
-        'band':'',
+        'suit':'',
         'value': 8,
     },
     {
         'name':'Nine',
-        'band':'',
+        'suit':'',
         'value': 9,
     },
     {
         'name':'Ten',
-        'band':'',
+        'suit':'',
         'value': 10,
     },
     {
         'name':'J',
-        'band':'',
+        'suit':'',
         'value': 10,
     },
     {
         'name':'Queen',
-        'band':'',
+        'suit':'',
         'value': 10,
     },
     {
         'name':'King',
-        'band':'',
+        'suit':'',
         'value': 10,
     },
 ]

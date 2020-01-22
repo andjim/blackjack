@@ -1,34 +1,39 @@
 from random import choice
 from cards import Card, DECK
 import re
-import subprocess as sp
+from random import choice
+from os import system
 
-class Hand:
-    _cards = []
-
-    @property
-    def cards(self):
-        self._cards
-    
+class Hand(list):
+   
     def add_card(self, card):
         if not isinstance(card, Card):
             raise ValueError('Must be Card type value')
-        self._cards.append(card)
+        self.append(card)
     
     def _sort_card(self):
         cards = []
-        for c in self._cards:
+        for c in self:
             if not isinstance(c.value, tuple):
                 cards.insert(-1,c)
                 continue
             cards.append(c)
-        self._cards = cards
+        self = Hand(cards)
+    
+    def empty_hand(self):
+        self.clear()
+
+    def __str__(self):
+        res = ""
+        for c in self:
+            res += "%s, " % c
+        return res
 
     @property
     def total(self):
         total = 0
         self._sort_card()
-        for c in self._cards:
+        for c in self:
             if not isinstance(c.value, tuple):
                 total += c.value
                 continue
@@ -80,13 +85,19 @@ class Player:
 
     
 class Dealer(Player):
-    pass
+    def hit(self):
+        if self.hand.total >= 17:
+            return False
+        return True
 
 class Game:
     deck = []
-    on_bet = 0
-    players =[Dealer('Dealer',1000000)]
-        
+    state = {
+        'on_bet': 0,
+        'active_player': None
+    }
+    players = [Dealer('Dealer',20000)]
+
     def shuffle(self):
         cards = []
         for c in self.deck:
@@ -94,65 +105,55 @@ class Game:
             card = self.deck.pop(card_index)
             cards.append(card)
         self.deck = cards
-    
-    def bet(self):
-        for player in self.players:
-            self.on_bet += player.bet()
-    
-    def turn(self):
-        res = {}
-        for player in self.players:
-            player_info = {'player':player, 'status': 'play'}
-            last_card = None
-            while True:
-                hitted = player.hit()
-                player_info.update(hitted=hitted)
-                if not hitted:
-                    player_info.update(card= last_card)
-                    break
 
-                last_card = self.deck.pop()
-                player.hand.add_card(last_card)
-                player_info.update(card= last_card)
+    def screen(self, func):
+        system('cls')
+        header = "Player's turn: %(active_player)s \t\t\tBlackJack\t\t\tOn bet: %(on_bet)s\n"
 
-                print(player.hand.total)
-                if player.hand.total > 21:
-                    player_info.update(status='lost')
-                    break
-                elif player.hand.total == 21:
-                    player_info.update(status="won")
-                    break
-            res = player_info
-        return res
+        body = {
+            'name': '',
+            'cards': '',
+            'money': '',
+            'total': ''
+        }
+        for p in self.players:
+            body['name'] += (not body['name'] and "\n\t{p.name}"+"\t"*10 or "{p.name}").format(p=p)
+            body['cards'] += (not body['cards'] and "\nCards: {p.hand}"+"\t"*4 or "{p.hand}").format(p=p)
+            body['money'] += (not body['money'] and "\nMoney: {p.money}"+"\t"*9 or "{p.money}").format(p=p)
+            body['total'] += (not body['total'] and "\nTotal: {p.hand.total}"+"\t"*9 or "{p.hand.total}").format(p=p)
 
-    def _will_play(self):
-        while True:
-            play:str = input('Would you play? ([1]: yes [0]: no): ')
-            if not play.isdigit():
-                print("%s was not a valid asnwer, use 1 for yes or 0 for no." % play)
-                continue
-            return bool(int(play))
+        data = {
+            'active_player': self.players[self.state['active_player']].name,
+            'on_bet': self.state['on_bet']
+        }
+        temp = header
+        for l in body.values():
+            temp += l
         
+        print(temp % data)
+        func(1)
+
+    def add_player(self):
+        name = ""
+        while not name:
+            name = input("Your name: ")
+        p = Player(name, 10000)
+        self.players.append(p)
+
+    def first_draw(self):
+        for p in self.players:
+            for i in [0,1]:
+                p.hand.add_card(self.deck.pop())
 
     def start(self):
-        while True:
-            if not self._will_play():
-                break
-            self.deck = DECK * 2 # two decks of fifty-two cards
-            self.bet()
-            self.shuffle()
-            while True:
-                last_player_info = self.turn()
-                
-                if last_player_info.get('status') != 'play':
-                    print('%s has %s' % (last_player_info.get('player').name,last_player_info.get('status')))
-                    break
-                
-                winner = sorted(self.players, key=lambda x: x.hand.total, reverse=True)[0]
-                if winner:
-                   print('%s has %s' % (last_player_info.get('player').name,last_player_info.get('won')))
-                   break
-                
+        self.deck = DECK * 2
+        self.shuffle()
+        self.add_player()
+        self.first_draw()
+        for p in self.players:
+            self.state['active_player'] = self.players.index(p)
+            self.screen(lambda x: input('STOP: '))
+
 
 if __name__ == "__main__":
     game = Game()
