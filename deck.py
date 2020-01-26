@@ -107,7 +107,7 @@ class Game:
         self.deck = cards
 
     def screen(self, func):
-        system('cls')
+        system('clear')
         header = "Player's turn: %(active_player)s \t\t\tBlackJack\t\t\tOn bet: %(on_bet)s\n"
 
         body = {
@@ -129,9 +129,6 @@ class Game:
         temp = header
         for l in body.values():
             temp += l
-        
-        print(temp % data)
-        func(1)
 
     def add_player(self):
         name = ""
