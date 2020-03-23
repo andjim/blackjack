@@ -1,13 +1,29 @@
 class Card:
-    _value = None
-    def __init__(self, name, suit, value):
-        self.name = name
-        self.suit = suit
-        self.value = value
+    def __init__(self, name:str, suit:str, value, faced:bool=True):
+        self._name = name
+        self._suit = suit
+        self._value = value
+        self.faced = faced
 
     @property
     def value(self):
-        return self._value
+        return self.faced and self._value or 0
+
+    @property
+    def name(self):
+        return self.faced and self._name or 'Faced Down'
+
+    @property
+    def suit(self):
+        return self.faced and self._suit or ''
+
+    @name.setter
+    def name(self, val):
+        self._name = val
+
+    @suit.setter
+    def suit(self, val):
+        self._suit = val
 
     @value.setter
     def value(self, val):
@@ -19,7 +35,7 @@ class Card:
             raise ValueError('Worng value %s' % (val))
 
     def __str__(self):
-        return "%s of %s" % (self.name,self.suit)
+        return self.faced and "%s of %s" % (self.name,self.suit) or self.name
 
 
 CARDS_TEMPLATE = [
