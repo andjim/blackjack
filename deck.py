@@ -3,6 +3,9 @@ from cards import Card, DECK
 import re
 from random import choice
 from os import system
+from wrapper import Wrapper
+
+WP = Wrapper("",40,40)
 
 class Hand(list):
    
@@ -108,27 +111,31 @@ class Game:
 
     def screen(self, func):
         system('clear')
-        header = "Player's turn: %(active_player)s \t\t\tBlackJack\t\t\tOn bet: %(on_bet)s\n"
-
+        data = {
+            'active_player': self.players[self.state['active_player']].name,
+            'on_bet': self.state['on_bet']
+        }
+        header = "Player's turn: %(active_player)s ||| BlackJack ||| On bet: %(on_bet)s\n\n" % (data)
         body = {
             'name': '',
             'cards': '',
             'money': '',
             'total': ''
         }
-        for p in self.players:
-            body['name'] += (not body['name'] and "\n\t{p.name}"+"\t"*10 or "{p.name}").format(p=p)
-            body['cards'] += (not body['cards'] and "\nCards: {p.hand}"+"\t"*4 or "{p.hand}").format(p=p)
-            body['money'] += (not body['money'] and "\nMoney: {p.money}"+"\t"*9 or "{p.money}").format(p=p)
-            body['total'] += (not body['total'] and "\nTotal: {p.hand.total}"+"\t"*9 or "{p.hand.total}").format(p=p)
+        players = self.players[0:]
+        players.reverse()
+        for p in players:
+            body['name'] +=  (not body['name']  and "{p.name} ||| " or " ||| {p.name}\n\n").format(p=p)
+            body['cards'] += (not body['cards'] and "Cards: {p.hand} ||| " or " ||| Cards: {p.hand}\n").format(p=p)
+            body['money'] += (not body['money'] and "Money: {p.money} ||| " or " ||| Money: {p.money}\n").format(p=p)
+            body['total'] += (not body['total'] and "Total: {p.hand.total} ||| " or " ||| Total:{p.hand.total}\n").format(p=p)
 
-        data = {
-            'active_player': self.players[self.state['active_player']].name,
-            'on_bet': self.state['on_bet']
-        }
         temp = header
         for l in body.values():
             temp += l
+        WP.raw_text = temp
+        print(WP.wrap())
+        func(2)
 
     def add_player(self):
         name = ""
@@ -139,17 +146,19 @@ class Game:
 
     def first_draw(self):
         for p in self.players:
-            for i in [0,1]:
-                p.hand.add_card(self.deck.pop())
+            for i in [1,0]:
+                if not isinstance(p, Dealer):
+                    p.hand.add_card(self.deck.pop())
+                    continue
+            c = self.deck.pop()
+            c.faced = bool(i)
+            p.hand.add_card(c)  
 
     def start(self):
         self.deck = DECK * 2
         self.shuffle()
         self.add_player()
         self.first_draw()
-        for p in self.players:
-            self.state['active_player'] = self.players.index(p)
-            self.screen(lambda x: input('STOP: '))
 
 
 if __name__ == "__main__":
